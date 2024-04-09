@@ -3,7 +3,7 @@
 $servername = "gbd_mysql_A"; // El nombre del servidor para Docker es el nombre del contenedor
 $username = "root"; // El usuario por defecto es "root"
 $password = ""; // La contraseña que estableciste al ejecutar el contenedor
-$database = "gbd"; // El nombre de la base de datos que creaste
+$database = "ahorcado"; // El nombre de la base de datos que creaste
 
 // Crear conexión
 $conn = new mysqli($servername, $username, $password, $database);
