@@ -1,114 +1,171 @@
 <?php
-// Start the session always at the beginning
 session_start();
-#echo var_dump($_SESSION);
 
-//HTML code below
+// HTML code below
 echo "<!DOCTYPE html>
-	  <html>
-	  <body>";
-//End HTML code
+      <html>
+      <body>";
+// End HTML code
 
-//Insert your code below here to set the initial values
-//Constants
+// Constants
 DEFINE('HOST', "gbd_mysql_A");
-DEFINE('DBNAME', 'ahorcado');
+DEFINE('DBNAME','ahorcado');
 DEFINE('USERNAME', 'root');
 DEFINE('PASS', '');
-DEFINE('QUERY', 'select titulo from pelicula order by rand() limit 1');
+DEFINE('QUERY', 'SELECT titulo FROM pelicula ORDER BY RAND() LIMIT 1');
 
-//Session Variables
-$_SESSION['Done'] = 1; #Check if the filme has been completed: 0 no, 1 yes
-$_SESSION['Lifes'] = 6; #Number of lives
-$_SESSION['Characters_used'] = ''; #Character used to discover the film
-$_SESSION['Conn'] = mysqli_connect(HOST, USERNAME, PASS, DBNAME);
-$table = mysqli_query($_SESSION['Conn'], QUERY);
+// Initialize session variables
+if(!isset($_SESSION['Lifes'])) {
+    $_SESSION['Done'] = 0; // Check if the movie has been completed: 0 no, 1 yes
+    $_SESSION['Lifes'] = 6; // Number of lifes
+    $_SESSION['Characters_used'] = ''; // Characters used to discover the film
 
-//Catching the film retrieved by the DB
-foreach ($table as $row) {
-	foreach ($row as $_SESSION['Film']) {
-		//echo $_SESSION['Film'];   //remove this line after checks
-	}
+    // Database connection
+    $_SESSION['Conn'] = mysqli_connect(HOST, USERNAME, PASS, DBNAME);
+    if (!$_SESSION['Conn']) {
+        die("Conexión fallida: " . mysqli_connect_error());
+    }
+
+    // Execute the query to get a random movie
+    if (!isset($_SESSION['movie'])) {
+        $table = mysqli_query($_SESSION['Conn'], QUERY);
+        $row = mysqli_fetch_assoc($table);
+        $_SESSION['movie'] = $row['titulo'];
+    }
+    esconderPalabra();
 }
 
-//Hidden the film
-$_SESSION['Hidden_film'] = Hide_Film($_SESSION['Film']);
-echo "<br>";
-echo $_SESSION['Hidden_film'];
+// Function to check if a letter exists in the movie title
+function checkLetter($letter, $movie) {
+    return stripos($movie, $letter) !== false;
+}
 
-//********* end of definition of initial values ***********
+// Function to check if the game is over
+function isGameOver() {
+    return $_SESSION['Lifes'] === 0 || $_SESSION['Done'] === 1;
+}
 
-while (Still_Alive()) {
-	$Char = Input_Char();
-	echo "<br>";
-	echo $Char;
+function ResetGame() {
+    session_reset();
+}
+
+function esconderPalabra() {
+    echo "Película: ";
+    $characters = str_split($_SESSION['movie']);
+    foreach ($characters as $char) {
+        if (in_array(($char == " "), str_split($_SESSION['Characters_used']))) {
+            echo "&nbsp&nbsp&nbsp";
+        } else 
+        echo "_ ";
+    }
 }
 
 
-
-/*
-// remove all session variables
-session_unset();
-
-// destroy the session
-session_destroy();
-*/
-
-//**********************************//
-//     Definition of Functions      //
-//**********************************//
-
-//Function to check if the user has lifes
-function Still_Alive()
-{
-	if ($_SESSION['Lifes'] > 0) {
-		return true;
-	} else {
-		return false;
-	}
+// Function to display the game status
+function displayGameStatus() {
+    echo "Película: ";
+    $characters = str_split($_SESSION['movie']);
+    $characters_used = str_split($_SESSION['Characters_used']);
+    foreach ($characters as $char) {
+        if (in_array(($char == " "), str_split($_SESSION['Characters_used']))) {
+            echo "&nbsp&nbsp&nbsp";
+        }
+        else if (in_array(strtolower($char), str_split($_SESSION['Characters_used']))) {
+            echo $char . " ";
+        } else {
+            echo "_ ";
+        }
+    }
+    echo "<br>";
+    echo "Letras usadas: " . $_SESSION['Characters_used'] . "<br>"; // Show guessed letters
+    echo "Vidas restantes: " . $_SESSION['Lifes'] . "<br>";
 }
 
-//Function to check if the film is done
-function Is_Done()
-{
-	return false;
-}
 
-//Function to Hide the film
-function Hide_film($film)
-{
-	$Hide_Film = '';
-	for ($i = 0; $i < strlen($film); $i++) {
-		if ($film[$i] <> ' ') {
-			$Hide_Film = $Hide_Film . " _ ";
-		} else {
-			$Hide_Film = $Hide_Film . "&nbsp" . "&nbsp" . "&nbsp";
-		}
-	}
-	return $Hide_Film;
-}
+// Insert your code below here to implement the game logic
+if (!isGameOver()) {
+    // Display the game status
 
-function Input_Char()
-{
-	echo '<form method="post" action="' . $_SERVER['PHP_SELF'] . '">
-    Name: <input type="text" name="fname">
-    <input type="submit">
+    // Check if a letter has been submitted
+    if (isset($_POST['letter'])) {
+        $letter = strtolower($_POST['letter']);
+        $_SESSION['Characters_used'] .= " ";
+        //crear array nuevo
+        
+
+        if (checkLetter($letter, $_SESSION['Characters_used'])) {
+            echo "Ya has usado esta letra.<br>";
+        } else if (checkLetter($letter, $_SESSION['movie'])) {
+            echo "¡Buena elección! La letra '$letter' está en la película.<br>";
+            $_SESSION['Characters_used'] .= $letter;
+        } else {
+            echo "La letra '$letter' no está en la película. Pierdes una vida.<br>";
+            $_SESSION['Lifes']--;
+            $_SESSION['Characters_used'] .= $letter;
+        }
+        //enviamos letra al array nuevo
+
+        //enviamos array a base de datos
+
+        //eliminamos letra del array nuevo
+
+        
+        displayGameStatus();
+
+        // Check if the movie has been completed
+        $completed = true;
+        foreach (str_split($_SESSION['movie']) as $char) {
+            if (!in_array(strtolower($char), str_split($_SESSION['Characters_used']))) {
+                $completed = false;
+                break;
+            }
+        }
+        if ($completed) {
+            echo "¡Felicidades! Has adivinado la película: " . $_SESSION['movie'];
+            $_SESSION['Done'] = 1;
+        }
+    }
+
+    // HTML form to submit a letter
+    echo '<form method="post" action="">
+        Introduce una letra: <input type="text" name="letter" maxlength="1" pattern="[a-zA-Z]" required>
+        <input type="submit" value="Enviar">
+        </form>';
+
+    //Boton para reiniciar partida
+    echo '<form method="post">
+    <button name="test">Reiniciar partida</button>
     </form>';
 
-	if ($_SERVER["REQUEST_METHOD"] == "POST") {
-		$name = htmlspecialchars($_POST['fname']);
-		if (empty($name)) {
-			echo "Please enter a Char";
-		} else {
-			echo $name;
-		}
-		return $name;
-	}
+    if(isset($_POST['test'])){
+      //do php stuff 
+      session_destroy(); 
+      session_reset();
+    }
+
+
+} else {
+    // Game over message
+    echo "Juego terminado. La película era: " . $_SESSION['movie'] . "<br><br><br><br>";
+    echo '<form method="post">
+    <button name="test">Reiniciar partida</button>
+    </form>';
+
+    if(isset($_POST['test'])){
+      //do php stuff 
+      session_destroy(); 
+      session_reset();
+    }
 }
 
-// Otro código ...
+// Close database connection
+
+// HTML code below
+echo "</body>
+      </html>";
+// End HTML code
+
+//cerrar sesion aqui 
 
 
 ?>
-Ahorcado.php
-El tauler de detalls s'ha reduït.
