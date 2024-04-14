@@ -14,12 +14,13 @@ if (!isGameOver()) {
     letraEnPeli();
     peliCompletada();
     displayGameStatus();
-    input();
-    btnReset();
-
-} else {
-    hasPerdido();
-    btnReset();
+    if($_SESSION['Lifes'] > 0){
+        input();
+        btnReset();
+    } else {
+        hasPerdido();
+        btnReset();
+    }
 }
 
 echo "</body>
@@ -164,7 +165,7 @@ function peliCompletada(){
 }
 
 function isGameOver(){
-    return $_SESSION['Lifes'] === 1 || $_SESSION['Done'] === 1;
+    return $_SESSION['Lifes'] == 0 || $_SESSION['Done'] == 1;
 }
 
 function input(){
