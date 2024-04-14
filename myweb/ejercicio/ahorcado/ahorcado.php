@@ -190,9 +190,9 @@ function hasPerdido(){
 }
 
 function muestraImagen(){
-    if($_SESSION['Lifes'] < 6){
+    
 
         echo '<img style="width:300px;height:300px;object-fit:contain;margin-top:25px" src="./img/ahorcado' .  $_SESSION['Lifes'] +1 . '.png">';
-    }
+    
 }
 ?>
