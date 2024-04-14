@@ -11,6 +11,6 @@ CREATE TABLE pelicula (
 INSERT INTO pelicula (titulo) VALUES
 ('Pulp Fiction'),
 ('The Godfather'),
-('The Shawshank Redemption'),
-('Inception'),
-('The Dark Knight');
+('El rey leon'),
+('Un ciudadano ejemplar'),
+('El lobo de wall street');
